@@ -1,0 +1,48 @@
+name: Release Java Bindings
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "java/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "java/**"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4.2.1
+        with:
+          java-version: "22"
+          distribution: "temurin"
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cargo build
+        working-directory: java
+        run: cargo build --release
+
+      - name: Gradle build
+        working-directory: java
+        run: ./gradlew build
+
+      - name: Publish Release to Github
+        uses: gradle/gradle-build-action@v3
+        with:
+          build-root-directory: java
+          arguments: publishReleasePublicationToGithubPackagesRepository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
